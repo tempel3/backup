@@ -54,8 +54,6 @@ command = command + ["-v", "{}/.cache:/home/duplicity/.cache/duplicity".format(c
   "wernight/duplicity",
   "duplicity"]
 
-print(command)
-
 def get_encyption_arguments():
   if args.passphrase:
     return []
@@ -63,12 +61,12 @@ def get_encyption_arguments():
 
 def print_collection_status():
   subprocess.check_call(command +
-    ["collection-status",     
+    ["collection-status",
      "file:///to_directory"] + get_encyption_arguments())
 
 def get_collection_status():
   out = subprocess.check_output(command +
-    ["collection-status",     
+    ["collection-status",
      "file:///to_directory"] + get_encyption_arguments())
   return str(out)
 
@@ -85,7 +83,7 @@ def last_backup_time():
           backuptime = time.mktime(time.strptime(converted_time, "%a %b %d %H:%M:%S %Y"))
 
           if lastbackup < backuptime:
-            lastbackup = backuptime            
+            lastbackup = backuptime
 
     return lastbackup
 
@@ -102,7 +100,7 @@ def check_last_backup(max_age_in_seconds):
 
   except Exception as e:
     print("CRITICAL: Caught exception - {}".format(str(e)))
-    exit(2)  
+    exit(2)
 
 # mein case
 if args.check:
@@ -114,7 +112,7 @@ elif args.info:
 elif args.restore:
   print("Restoring from backup")
   subprocess.check_call(command +
-    ["restore",     
+    ["restore",
     "--allow-source-mismatch",
     "file:///from_directory", 
     "/to_directory"]  + get_encyption_arguments())
