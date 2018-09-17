@@ -10,6 +10,7 @@ import argparse
 import re
 import os
 import time
+import traceback
 
 # https://hub.docker.com/r/wernight/duplicity/
 
@@ -55,7 +56,7 @@ if not os.path.exists(from_directory):
 if not os.path.exists(to_directory):
   raise Exception("{0} directory not found.".format(to_directory))
 
-command = ["docker", "run", "--rm", "-it", "--user", "root"]
+command = ["docker", "run", "--rm", "--user", "root"]
 
 if args.passphrase:
   command = command + ["-e", "PASSPHRASE={0}".format(args.passphrase)]
@@ -88,10 +89,10 @@ def last_backup_time():
 
     lastbackup = 0
 
-    for line in status.split("\\r\\n"):
+    for line in status.split("\\n"):
         parts = line.split()
         # Example line: Full         Wed May 18 21:47:38 2016              1113
-        if parts[0] == "Full" or parts[0] == "Incremental":
+        if len(parts)>0 and (parts[0] == "Full" or parts[0] == "Incremental"):
           converted_time = " ".join(parts[1:6])
           backuptime = time.mktime(time.strptime(converted_time, "%a %b %d %H:%M:%S %Y"))
 
@@ -111,9 +112,9 @@ def check_last_backup(max_age_in_seconds):
       print("OK: Last backup is ok: {}".format(time.ctime(lastbackup)))
       exit(0)
 
-  except Exception as e:
-    print("CRITICAL: Caught exception - {}".format(str(e)))
-    exit(2)
+  except Exception:
+    print("CRITICAL: Caught exception - {}".format(traceback.format_exc()))
+    exit(3)
 
 # mein case
 if args.check:
@@ -151,3 +152,4 @@ else:
       ["cleanup", 
       "--force", 
       "file:///to_directory"]  + get_encyption_arguments())
+
