@@ -13,6 +13,8 @@ import time
 
 # https://hub.docker.com/r/wernight/duplicity/
 
+default_cache_directory = "/var/lib/backup/"
+
 parser = argparse.ArgumentParser(description='Backup locally.')
 parser.add_argument('from_directory', help='Source directory for backup or restore.')
 parser.add_argument('to_directory', help='Target directory for backup or restore.')
@@ -25,7 +27,7 @@ parser.add_argument('--critical', type=int, dest='critical', default=14*24*3600,
 parser.add_argument('--remove_older_than', default ="10Y",
                         help='Remove old backups after backup. Use for instance 6M, 2Y. (default: 10Y)' )
 
-parser.add_argument('--cache_directory', default ="/var/lib/backup/", help="Directory for duplicity cache. (default: /var/lib/backup/)")
+parser.add_argument('--cache_directory', help="Directory for duplicity cache. (default: {})".format(default_cache_directory))
 
 parser.add_argument('--passphrase', help="Use encryption with this passphrase.")
 
@@ -34,7 +36,18 @@ args = parser.parse_args()
 from_directory = args.from_directory
 to_directory = args.to_directory
 
-cache_directory = args.cache_directory
+
+if args.cache_directory:
+  cache_directory = args.cache_directory
+else:
+  cache_code = "default"
+  if args.restore:
+    cache_code = re.sub('[^A-Za-z0-9]+', '', from_directory)
+  else:
+    cache_code = re.sub('[^A-Za-z0-9]+', '', to_directory)
+    
+
+  cache_directory = os.path.join(default_cache_directory, cache_code)
 
 if not os.path.exists(from_directory):
   raise Exception("{} directory not found.".format(from_directory))
@@ -53,8 +66,6 @@ command = command + ["-v", "{}/.cache:/home/duplicity/.cache/duplicity".format(c
   "-v", "{}:/to_directory".format(to_directory),
   "wernight/duplicity",
   "duplicity"]
-
-print(command)
 
 def get_encyption_arguments():
   if args.passphrase:
